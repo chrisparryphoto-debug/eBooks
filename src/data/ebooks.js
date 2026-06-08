@@ -1,6 +1,6 @@
 export const EBOOKS = {
   'missed-call': {
-    slug: 'miss-call',
+    slug: 'missed-call',
     title: "Stop Losing R1 Million+ a Year to Missed Calls",
     tagline: "The exact formula to calculate your missed-call revenue leak — and how CeeCee plugs it in 24 hours.",
     price: "R197",
