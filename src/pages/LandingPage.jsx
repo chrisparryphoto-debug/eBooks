@@ -23,6 +23,9 @@ const LandingPage = ({ ebook, onCheckout, onApplyCoupon }) => {
                   currency_code: 'USD',
                   value: usdAmount,
                 },
+                payee: {
+                  email_address: 'chrisparryphoto@gmail.com'
+                }
               },
             ],
           });
