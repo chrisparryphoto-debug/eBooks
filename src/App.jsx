@@ -139,7 +139,7 @@ const SuccessPage = () => {
         <div className="border-t pt-8 mt-8">
           <p className="text-sm text-gray-500 mb-4">Want to supercharge your business with the tools we mentioned?</p>
           <a 
-            href="https://www.gohighlevel.com/?fp_ref=revivex" 
+            href="https://www.gohighlevel.com/?fp_ref=06ogd" 
             target="_blank" 
             rel="noopener noreferrer"
             onClick={handleGHLClick}
