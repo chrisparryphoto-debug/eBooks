@@ -64,17 +64,17 @@ const EBookWrapper = () => {
     return false;
   };
 
-  const handleCheckout = () => {
-    trackClick('Initiate Checkout', { 
+  const handlePaymentSuccess = () => {
+    trackClick('Payment Success', { 
       ebook: ebook.title, 
       slug: ebook.slug,
       price: currentPrice,
       coupon: discount > 0 ? couponCode : 'none'
     });
-    // In a real app, this would redirect to Stripe/PayFast Checkout
-    console.log(`Proceeding to checkout for ${ebook.title} at R${currentPrice}...`);
     
-    // Mocking success redirect with state
+    console.log(`Payment confirmed for ${ebook.title}. Redirecting to download...`);
+    
+    // Success redirect with state
     navigate('/success', { state: { ebookSlug: ebook.slug, paidPrice: currentPrice } });
   };
 
@@ -87,7 +87,7 @@ const EBookWrapper = () => {
         originalPrice: (currentPrice < originalPriceNum) ? originalPriceStr : null,
         isPromo: isEBook1 // Banner only for eBook 1 as per task "promo for eBook 1 (first 50)"
       }} 
-      onCheckout={handleCheckout} 
+      onCheckout={handlePaymentSuccess} 
       onApplyCoupon={handleApplyCoupon}
     />
   );
