@@ -1,10 +1,50 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { CheckCircle, ArrowRight, Download, CreditCard, ShieldCheck, Ticket } from 'lucide-react';
 
 const LandingPage = ({ ebook, onCheckout, onApplyCoupon }) => {
   const [coupon, setCoupon] = useState('');
   const [couponApplied, setCouponApplied] = useState(false);
   const [showCoupon, setShowCoupon] = useState(false);
+  const paypalRef = useRef();
+
+  useEffect(() => {
+    if (window.paypal) {
+      window.paypal.Buttons({
+        createOrder: (data, actions) => {
+          // Convert ZAR to USD for PayPal (approximate rate for MVP)
+          const zarAmount = parseFloat(ebook.displayPrice.replace('R', ''));
+          const usdAmount = (zarAmount / 19).toFixed(2); // Using 19 as a safe R/$ estimate
+          
+          return actions.order.create({
+            purchase_units: [
+              {
+                description: ebook.title,
+                amount: {
+                  currency_code: 'USD',
+                  value: usdAmount,
+                },
+              },
+            ],
+          });
+        },
+        onApprove: async (data, actions) => {
+          const order = await actions.order.capture();
+          console.log('PayPal Order Captured:', order);
+          onCheckout(); // Redirect to success page
+        },
+        onError: (err) => {
+          console.error('PayPal Error:', err);
+          alert('There was an error processing your payment with PayPal.');
+        },
+        style: {
+          layout: 'vertical',
+          color: 'black',
+          shape: 'rect',
+          label: 'buy'
+        }
+      }).render(paypalRef.current);
+    }
+  }, [ebook.displayPrice]);
 
   const handleApply = (e) => {
     e.preventDefault();
@@ -43,7 +83,7 @@ const LandingPage = ({ ebook, onCheckout, onApplyCoupon }) => {
                 )}
               </div>
               <button 
-                onClick={onCheckout}
+                onClick={() => document.getElementById('checkout').scrollIntoView({ behavior: 'smooth' })}
                 className="bg-revivex-red text-white px-8 py-4 rounded-lg font-bold text-lg hover:bg-red-700 transition-colors flex items-center gap-2 shadow-lg"
               >
                 Get Your Copy Now <ArrowRight className="w-5 h-5" />
@@ -125,7 +165,7 @@ const LandingPage = ({ ebook, onCheckout, onApplyCoupon }) => {
       </section>
 
       {/* Call to Action */}
-      <section className="py-20 bg-revivex-black text-white px-4">
+      <section id="checkout" className="py-20 bg-revivex-black text-white px-4">
         <div className="max-w-xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-6">Stop Leaking Leads Today</h2>
           <p className="text-xl mb-8 text-gray-400">
@@ -140,14 +180,9 @@ const LandingPage = ({ ebook, onCheckout, onApplyCoupon }) => {
             </div>
             {ebook.isPromo && <p className="text-revivex-red text-sm font-bold uppercase tracking-wider">Limited Launch Offer</p>}
           </div>
-          <button 
-            onClick={onCheckout}
-            className="w-full bg-revivex-red text-white px-8 py-5 rounded-lg font-bold text-xl hover:bg-red-700 transition-all transform hover:scale-105 flex items-center justify-center gap-3 shadow-xl"
-          >
-            <CreditCard className="w-6 h-6" /> Buy Now
-          </button>
+          <div ref={paypalRef} className="mt-8"></div>
           <div className="mt-6 flex items-center justify-center gap-2 text-sm text-gray-500">
-            <ShieldCheck className="w-4 h-4" /> Secure Payment via PayFast / Stripe
+            <ShieldCheck className="w-4 h-4" /> Secure Payment via PayPal
           </div>
         </div>
       </section>
