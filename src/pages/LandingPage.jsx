@@ -35,6 +35,13 @@ const LandingPage = ({ ebook, onCheckout, onApplyCoupon }) => {
           console.log('PayPal Order Captured:', order);
           onCheckout(); // Redirect to success page
         },
+        onCancel: (data) => {
+          console.log('PayPal Payment Cancelled');
+          // Since we are already on the eBook page, we don't necessarily need a redirect,
+          // but we can show a notice or just let it stay. 
+          // The lead said "redirect back to the eBook page", so I'll just refresh/navigate to be safe.
+          window.location.reload(); 
+        },
         onError: (err) => {
           console.error('PayPal Error:', err);
           alert('There was an error processing your payment with PayPal.');
