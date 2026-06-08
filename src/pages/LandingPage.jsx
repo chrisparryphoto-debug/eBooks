@@ -68,6 +68,17 @@ const LandingPage = ({ ebook, onCheckout, onApplyCoupon }) => {
 
   return (
     <div className="min-h-screen bg-white">
+      {/* Navigation */}
+      <nav className="bg-white border-b py-4 px-4 sticky top-0 z-50 shadow-sm">
+        <div className="max-w-6xl mx-auto flex justify-between items-center">
+          <img src={import.meta.env.BASE_URL + "assets/revivex_logo.jpg"} alt="ReviveX Digital" className="h-10" />
+          <div className="hidden md:flex gap-6 text-sm font-medium text-gray-600">
+            <a href="#learn" className="hover:text-revivex-red transition-colors">What You'll Learn</a>
+            <a href="#checkout" className="hover:text-revivex-red transition-colors">Get Started</a>
+          </div>
+        </div>
+      </nav>
+
       {/* Promo Banner */}
       {ebook.isPromo && (
         <div className="bg-revivex-red text-white text-center py-2 text-sm font-bold animate-pulse">
@@ -130,7 +141,7 @@ const LandingPage = ({ ebook, onCheckout, onApplyCoupon }) => {
           </div>
           <div className="w-64 h-80 bg-gray-200 rounded-lg shadow-2xl flex items-center justify-center text-gray-500 border-4 border-revivex-red overflow-hidden relative group">
             {ebook.coverImage ? (
-              <img src={ebook.coverImage} alt={ebook.title} className="w-full h-full object-cover" />
+              <img src={import.meta.env.BASE_URL + ebook.coverImage} alt={ebook.title} className="w-full h-full object-cover" />
             ) : (
               <span className="text-center p-4">eBook Cover Placeholder</span>
             )}
@@ -160,7 +171,7 @@ const LandingPage = ({ ebook, onCheckout, onApplyCoupon }) => {
       </section>
 
       {/* Pain Points / Value Prop */}
-      <section className="py-20 px-4">
+      <section id="learn" className="py-20 px-4">
         <div className="max-w-3xl mx-auto">
           <h2 className="text-3xl font-bold mb-12 text-center text-revivex-black">What You'll Learn Inside</h2>
           <div className="grid md:grid-cols-1 gap-6">

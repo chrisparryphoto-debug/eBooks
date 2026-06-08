@@ -1,6 +1,6 @@
 export const EBOOKS = {
   'missed-call': {
-    slug: 'missed-call',
+    slug: 'miss-call',
     title: "Stop Losing R1 Million+ a Year to Missed Calls",
     tagline: "The exact formula to calculate your missed-call revenue leak — and how CeeCee plugs it in 24 hours.",
     price: "R197",
@@ -11,8 +11,8 @@ export const EBOOKS = {
       "The 3-Step System to capture leads while you're on-site or asleep",
       "SMS Reply Templates that turn missed calls into booked jobs instantly"
     ],
-    coverImage: "/assets/missed_call_cover.jpg",
-    pdfPath: "/ebook1-missed-calls.pdf"
+    coverImage: "assets/missed_call_cover.jpg",
+    pdfPath: "ebook1-missed-calls.pdf"
   },
   'dead-leads': {
     slug: 'dead-leads',
@@ -26,8 +26,8 @@ export const EBOOKS = {
       "How to automate your database revival without feeling 'spammy'",
       "A sample 7-touch sequence to turn cold leads into hot jobs"
     ],
-    coverImage: "/assets/dead_leads_cover.jpg",
-    pdfPath: "/ebook2-dead-leads.pdf"
+    coverImage: "assets/dead_leads_cover.jpg",
+    pdfPath: "ebook2-dead-leads.pdf"
   },
   'speed-wins': {
     slug: 'speed-wins',
@@ -41,8 +41,8 @@ export const EBOOKS = {
       "Full multi-channel capability: responding across WhatsApp, Email, and SMS",
       "A 60-minute action plan to achieve near-instant response times"
     ],
-    coverImage: "/assets/speed_wins_cover.jpg",
-    pdfPath: "/ebook3-speed-wins.pdf"
+    coverImage: "assets/speed_wins_cover.jpg",
+    pdfPath: "ebook3-speed-wins.pdf"
   },
   'engagement-wins': {
     slug: 'engagement-wins',
@@ -56,8 +56,8 @@ export const EBOOKS = {
       "The 24/7 engagement curve: How to guide visitors to a booking instantly",
       "Case Study: How one SA business generated R56k in 60 days with AI engagement"
     ],
-    coverImage: "/assets/engagement_wins_cover.jpg",
-    pdfPath: "/ebook4-website-engagement.pdf"
+    coverImage: "assets/engagement_wins_cover.jpg",
+    pdfPath: "ebook4-website-engagement.pdf"
   },
   'ai-bundle': {
     slug: 'ai-bundle',
@@ -71,7 +71,7 @@ export const EBOOKS = {
       "Advanced GHL automation workflows for trade and professional services",
       "A complete roadmap to full business automation"
     ],
-    coverImage: "/assets/bundle_cover.jpg",
-    pdfPath: "/ebook5-ai-bundle.pdf"
+    coverImage: "assets/bundle_cover.jpg",
+    pdfPath: "ebook5-ai-bundle.pdf"
   }
 };

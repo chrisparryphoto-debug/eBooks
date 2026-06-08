@@ -6,7 +6,7 @@ import { EBOOKS } from './data/ebooks';
 
 function App() {
   return (
-    <Router>
+    <Router basename={import.meta.env.BASE_URL}>
       <Routes>
         {/* Default route shows the first eBook */}
         <Route path="/" element={<Navigate to="/ebook/missed-call" replace />} />
@@ -125,7 +125,7 @@ const SuccessPage = () => {
         </p>
 
         <a 
-          href={ebook.pdfPath} 
+          href={import.meta.env.BASE_URL + ebook.pdfPath} 
           download
           onClick={handleDownload}
           className="block w-full bg-revivex-red text-white font-bold py-4 rounded-xl hover:bg-red-700 transition-colors flex items-center justify-center gap-2 mb-4"
