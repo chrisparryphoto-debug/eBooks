@@ -7,54 +7,66 @@ const LandingPage = ({ ebook, onCheckout, onApplyCoupon }) => {
   const [showCoupon, setShowCoupon] = useState(false);
   const paypalRef = useRef();
 
+  console.log("LandingPage rendering with ebook:", ebook?.slug);
+
   useEffect(() => {
-    if (window.paypal) {
-      window.paypal.Buttons({
-        createOrder: (data, actions) => {
-          // Convert ZAR to USD for PayPal (approximate rate for MVP)
-          const zarAmount = parseFloat(ebook.displayPrice.replace('R', ''));
-          const usdAmount = (zarAmount / 19).toFixed(2); // Using 19 as a safe R/$ estimate
-          
-          return actions.order.create({
-            purchase_units: [
-              {
-                description: ebook.title,
-                amount: {
-                  currency_code: 'USD',
-                  value: usdAmount,
+    if (!ebook) return;
+
+    const renderPayPal = () => {
+      if (window.paypal && paypalRef.current) {
+        // Clear previous buttons if any
+        paypalRef.current.innerHTML = '';
+        
+        window.paypal.Buttons({
+          createOrder: (data, actions) => {
+            const zarAmount = parseFloat(ebook.displayPrice.replace('R', ''));
+            const usdAmount = (zarAmount / 19).toFixed(2);
+            
+            return actions.order.create({
+              purchase_units: [
+                {
+                  description: ebook.title,
+                  amount: {
+                    currency_code: 'USD',
+                    value: usdAmount,
+                  },
+                  payee: {
+                    email_address: 'chrisparryphoto@gmail.com'
+                  }
                 },
-                payee: {
-                  email_address: 'chrisparryphoto@gmail.com'
-                }
-              },
-            ],
-          });
-        },
-        onApprove: async (data, actions) => {
-          const order = await actions.order.capture();
-          console.log('PayPal Order Captured:', order);
-          onCheckout(); // Redirect to success page
-        },
-        onCancel: (data) => {
-          console.log('PayPal Payment Cancelled');
-          // Since we are already on the eBook page, we don't necessarily need a redirect,
-          // but we can show a notice or just let it stay. 
-          // The lead said "redirect back to the eBook page", so I'll just refresh/navigate to be safe.
-          window.location.reload(); 
-        },
-        onError: (err) => {
-          console.error('PayPal Error:', err);
-          alert('There was an error processing your payment with PayPal.');
-        },
-        style: {
-          layout: 'vertical',
-          color: 'black',
-          shape: 'rect',
-          label: 'buy'
-        }
-      }).render(paypalRef.current);
-    }
-  }, [ebook.displayPrice]);
+              ],
+            });
+          },
+          onApprove: async (data, actions) => {
+            const order = await actions.order.capture();
+            console.log('PayPal Order Captured:', order);
+            onCheckout();
+          },
+          onCancel: (data) => {
+            console.log('PayPal Payment Cancelled');
+          },
+          onError: (err) => {
+            console.error('PayPal Error:', err);
+          },
+          style: {
+            layout: 'vertical',
+            color: 'black',
+            shape: 'rect',
+            label: 'buy'
+          }
+        }).render(paypalRef.current);
+      } else {
+        console.log("PayPal SDK not ready yet, retrying in 1s...");
+        setTimeout(renderPayPal, 1000);
+      }
+    };
+
+    renderPayPal();
+  }, [ebook?.displayPrice]);
+
+  if (!ebook) {
+    return <div className="p-20 text-center">Loading eBook data...</div>;
+  }
 
   const handleApply = (e) => {
     e.preventDefault();
@@ -66,12 +78,21 @@ const LandingPage = ({ ebook, onCheckout, onApplyCoupon }) => {
     }
   };
 
+  // Helper to fix base URL paths
+  const getAssetPath = (path) => {
+    const base = import.meta.env.BASE_URL;
+    if (path.startsWith('http')) return path;
+    const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base;
+    const cleanPath = path.startsWith('/') ? path : '/' + path;
+    return cleanBase + cleanPath;
+  };
+
   return (
     <div className="min-h-screen bg-white">
       {/* Navigation */}
       <nav className="bg-white border-b py-4 px-4 sticky top-0 z-50 shadow-sm">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
-          <img src={import.meta.env.BASE_URL + "assets/revivex_logo.jpg"} alt="ReviveX Digital" className="h-10" />
+          <img src={getAssetPath("assets/revivex_logo.jpg")} alt="ReviveX Digital" className="h-10" />
           <div className="hidden md:flex gap-6 text-sm font-medium text-gray-600">
             <a href="#learn" className="hover:text-revivex-red transition-colors">What You'll Learn</a>
             <a href="#checkout" className="hover:text-revivex-red transition-colors">Get Started</a>
@@ -98,134 +119,150 @@ const LandingPage = ({ ebook, onCheckout, onApplyCoupon }) => {
             </p>
             <div className="flex flex-col gap-4 items-center md:items-start">
               <div className="flex items-center gap-3">
-                <span className="text-3xl font-bold text-white">{ebook.displayPrice}</span>
-                {ebook.originalPrice && (
-                  <span className="text-xl text-gray-500 line-through">{ebook.originalPrice}</span>
-                )}
-              </div>
-              <button 
-                onClick={() => document.getElementById('checkout').scrollIntoView({ behavior: 'smooth' })}
-                className="bg-revivex-red text-white px-8 py-4 rounded-lg font-bold text-lg hover:bg-red-700 transition-colors flex items-center gap-2 shadow-lg"
-              >
-                Get Your Copy Now <ArrowRight className="w-5 h-5" />
-              </button>
-              
-              {!couponApplied && !ebook.isPromo && (
-                <button 
-                  onClick={() => setShowCoupon(!showCoupon)}
-                  className="text-gray-400 text-sm hover:text-white transition-colors flex items-center gap-1"
-                >
-                  <Ticket className="w-4 h-4" /> Have a coupon?
-                </button>
-              )}
-              
-              {showCoupon && !couponApplied && (
-                <form onSubmit={handleApply} className="flex gap-2">
-                  <input 
-                    type="text" 
-                    value={coupon}
-                    onChange={(e) => setCoupon(e.target.value)}
-                    placeholder="Enter code"
-                    className="bg-gray-800 border border-gray-700 rounded px-3 py-1 text-sm focus:outline-none focus:border-revivex-red"
-                  />
-                  <button type="submit" className="bg-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-600 transition-colors">Apply</button>
-                </form>
-              )}
-
-              {couponApplied && (
-                <div className="text-green-400 text-sm flex items-center gap-1">
-                  <CheckCircle className="w-4 h-4" /> Coupon Applied!
+                <div className="flex -space-x-2">
+                  {[1,2,3,4].map(i => (
+                    <div key={i} className="w-8 h-8 rounded-full border-2 border-revivex-black bg-gray-300"></div>
+                  ))}
                 </div>
-              )}
+                <p className="text-sm font-medium">Joined by 1,200+ business owners</p>
+              </div>
+              <a href="#checkout" className="bg-revivex-red text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-red-700 transition-all transform hover:scale-105 shadow-lg flex items-center gap-2">
+                Get Your Copy Now <ArrowRight size={20} />
+              </a>
             </div>
           </div>
-          <div className="w-64 h-80 bg-gray-200 rounded-lg shadow-2xl flex items-center justify-center text-gray-500 border-4 border-revivex-red overflow-hidden relative group">
-            {ebook.coverImage ? (
-              <img src={import.meta.env.BASE_URL + ebook.coverImage} alt={ebook.title} className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-center p-4">eBook Cover Placeholder</span>
-            )}
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-               <Download className="text-white w-12 h-12" />
-            </div>
+          <div className="w-64 md:w-80 flex-shrink-0 shadow-2xl rounded-lg overflow-hidden transform md:rotate-3">
+            <img src={getAssetPath(ebook.coverImage)} alt={ebook.title} className="w-full h-auto" />
           </div>
         </div>
       </header>
 
-      {/* Social Proof / Stats */}
-      <section className="py-12 bg-gray-50 border-b">
-        <div className="max-w-4xl mx-auto px-4 flex flex-wrap justify-center gap-8 text-center">
-          <div>
-            <div className="text-3xl font-bold text-revivex-red">1,000+</div>
-            <div className="text-gray-600">eBooks Sold</div>
-          </div>
-          <div>
-            <div className="text-3xl font-bold text-revivex-red">5/5</div>
-            <div className="text-gray-600">Customer Rating</div>
-          </div>
-          <div>
-             <div className="text-3xl font-bold text-revivex-red">Instant</div>
-             <div className="text-gray-600">PDF Delivery</div>
-          </div>
+      {/* Trust Bar */}
+      <div className="bg-gray-50 py-8 border-b">
+        <div className="max-w-6xl mx-auto px-4 flex flex-wrap justify-center gap-8 md:gap-16 opacity-50 grayscale">
+          <div className="flex items-center gap-2 font-bold text-xl italic">ReviveX AI</div>
+          <div className="flex items-center gap-2 font-bold text-xl italic">GHL PARTNER</div>
+          <div className="flex items-center gap-2 font-bold text-xl italic">SA TECH</div>
+          <div className="flex items-center gap-2 font-bold text-xl italic">SME FOCUS</div>
         </div>
-      </section>
+      </div>
 
-      {/* Pain Points / Value Prop */}
-      <section id="learn" className="py-20 px-4">
-        <div className="max-w-3xl mx-auto">
-          <h2 className="text-3xl font-bold mb-12 text-center text-revivex-black">What You'll Learn Inside</h2>
-          <div className="grid md:grid-cols-1 gap-6">
-            {ebook.learnings.map((learning, i) => (
-              <div key={i} className="flex items-start gap-4 p-5 rounded-xl bg-white shadow-sm border border-gray-100 hover:border-revivex-red transition-all">
-                <CheckCircle className="w-6 h-6 text-revivex-red flex-shrink-0 mt-1" />
-                <p className="text-lg text-gray-700 font-medium">{learning}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Call to Action */}
-      <section id="checkout" className="py-20 bg-revivex-black text-white px-4">
-        <div className="max-w-xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-6">Stop Leaking Leads Today</h2>
-          <p className="text-xl mb-8 text-gray-400">
-            Join hundreds of South African service-business owners who have stopped the revenue bleed and reclaimed their time.
-          </p>
-          <div className="mb-8">
-            <div className="flex items-center justify-center gap-3 mb-2">
-              <span className="text-4xl font-bold text-white">{ebook.displayPrice}</span>
-              {ebook.originalPrice && (
-                <span className="text-2xl text-gray-500 line-through">{ebook.originalPrice}</span>
-              )}
+      {/* Content Section */}
+      <main id="learn" className="py-20 px-4 max-w-6xl mx-auto">
+        <div className="grid md:grid-cols-2 gap-16 items-center">
+          <div>
+            <h2 className="text-3xl font-bold mb-6 text-revivex-black">What's Inside the Guide?</h2>
+            <div className="space-y-4">
+              {ebook.learnings && ebook.learnings.map((item, idx) => (
+                <div key={idx} className="flex gap-4">
+                  <CheckCircle className="text-green-500 flex-shrink-0" />
+                  <p className="text-gray-700">{item}</p>
+                </div>
+              ))}
             </div>
-            {ebook.isPromo && <p className="text-revivex-red text-sm font-bold uppercase tracking-wider">Limited Launch Offer</p>}
           </div>
-          <div ref={paypalRef} className="mt-8"></div>
-          <div className="mt-6 flex items-center justify-center gap-2 text-sm text-gray-500">
-            <ShieldCheck className="w-4 h-4" /> Secure Payment via PayPal
+          <div className="bg-gray-50 p-8 rounded-3xl border border-gray-100">
+            <h3 className="text-2xl font-bold mb-4">Why we wrote this:</h3>
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              We've seen too many South African service businesses work twice as hard for half the results, simply because their lead management is "leaky".
+            </p>
+            <p className="text-gray-600 leading-relaxed">
+              This guide isn't just theory—it's the exact blueprint we use to deploy AI agents that reclaim lost revenue in 24 hours.
+            </p>
+          </div>
+        </div>
+      </main>
+
+      {/* Checkout Section */}
+      <section id="checkout" className="py-20 px-4 bg-gray-50 border-y">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white rounded-3xl shadow-2xl overflow-hidden grid md:grid-cols-5 border border-gray-100">
+            <div className="md:col-span-2 bg-revivex-black p-8 text-white flex flex-col justify-between">
+              <div>
+                <h3 className="text-2xl font-bold mb-2">Order Summary</h3>
+                <p className="opacity-70 text-sm mb-6 font-medium uppercase tracking-wider">{ebook.title}</p>
+                
+                <div className="space-y-4 mb-8">
+                  <div className="flex items-center gap-3">
+                    <Download size={18} className="text-revivex-red" />
+                    <span className="text-sm">Instant Digital PDF</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <CreditCard size={18} className="text-revivex-red" />
+                    <span className="text-sm">Secure Online Payment</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <ShieldCheck size={18} className="text-revivex-red" />
+                    <span className="text-sm">100% Satisfaction Guarantee</span>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-baseline gap-2 mb-1">
+                  <span className="text-4xl font-extrabold">{ebook.displayPrice}</span>
+                  {ebook.originalPrice && (
+                    <span className="text-xl opacity-50 line-through">{ebook.originalPrice}</span>
+                  )}
+                </div>
+                <p className="text-xs opacity-60">One-time payment. No hidden fees.</p>
+              </div>
+            </div>
+            
+            <div className="md:col-span-3 p-8 md:p-12">
+              <h4 className="text-xl font-bold mb-6">Complete Your Purchase</h4>
+              
+              {!couponApplied ? (
+                <div className="mb-6">
+                  {showCoupon ? (
+                    <form onSubmit={handleApply} className="flex gap-2">
+                      <input 
+                        type="text" 
+                        value={coupon}
+                        onChange={(e) => setCoupon(e.target.value)}
+                        placeholder="Enter Code"
+                        className="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-revivex-red outline-none"
+                      />
+                      <button className="bg-gray-800 text-white px-4 py-2 rounded-lg font-bold">Apply</button>
+                    </form>
+                  ) : (
+                    <button 
+                      onClick={() => setShowCoupon(true)}
+                      className="text-revivex-red text-sm font-bold flex items-center gap-1 hover:underline"
+                    >
+                      <Ticket size={14} /> Have a coupon code?
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="mb-6 bg-green-50 text-green-700 p-3 rounded-lg text-sm font-bold flex items-center gap-2">
+                  <CheckCircle size={16} /> Coupon Applied!
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <div ref={paypalRef} className="min-h-[150px]"></div>
+                <p className="text-center text-xs text-gray-400 mt-4 flex items-center justify-center gap-1">
+                  <ShieldCheck size={12} /> Securely processed by PayPal
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Demo Booking CTA */}
-      <section className="py-16 bg-white border-t">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-           <h3 className="text-2xl font-bold mb-4 text-revivex-black">Tired of answering the phone yourself?</h3>
-           <p className="text-gray-600 mb-8 max-w-lg mx-auto">See how ReviveX's AI agents can handle your calls, book your appointments, and follow up with leads 24/7.</p>
-           <a 
-            href="https://revivexdigital.co.za/demo" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="bg-revivex-black text-white px-6 py-3 rounded-md font-bold hover:bg-gray-800 transition-colors inline-flex items-center gap-2"
-           >
-             Book a Free AI Demo <ArrowRight className="w-4 h-4" />
-           </a>
+      {/* Footer */}
+      <footer className="bg-white py-12 px-4 border-t">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+          <div className="flex flex-col items-center md:items-start">
+            <img src={getAssetPath("assets/revivex_logo.jpg")} alt="ReviveX Digital" className="h-8 mb-4 grayscale" />
+            <p className="text-sm text-gray-500">© 2026 ReviveX Digital. Built in South Africa.</p>
+          </div>
+          <div className="flex gap-8">
+            <a href="https://revivexdigital.com" target="_blank" rel="noopener noreferrer" className="text-sm text-gray-500 hover:text-revivex-red font-bold">Book an AI Demo</a>
+            <a href="mailto:hello@revivexdigital.com" className="text-sm text-gray-500 hover:text-revivex-red font-bold">Support</a>
+          </div>
         </div>
-      </section>
-
-      <footer className="py-8 text-center text-gray-400 text-sm">
-        &copy; {new Date().getFullYear()} ReviveX Digital. All rights reserved.
       </footer>
     </div>
   );

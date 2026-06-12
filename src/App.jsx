@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useParams, useLocation, Navigate } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import { trackClick } from './utils/analytics';
 import { EBOOKS } from './data/ebooks';
 
 function App() {
+  console.log("App component rendering. Base URL:", import.meta.env.BASE_URL);
+  
   return (
-    <Router basename={import.meta.env.BASE_URL}>
+    <Router>
       <Routes>
         {/* Default route shows the first eBook */}
         <Route path="/" element={<Navigate to="/ebook/missed-call" replace />} />
@@ -30,13 +32,16 @@ const EBookWrapper = () => {
   const [couponCode, setCouponCode] = useState('');
   const [discount, setDiscount] = useState(0);
 
+  console.log("EBookWrapper rendering for slug:", slug);
+
   const ebook = EBOOKS[slug || 'missed-call'];
 
   if (!ebook) {
+    console.warn("EBook not found for slug:", slug);
     return <Navigate to="/" replace />;
   }
 
-  // Launch Promo Prices (aligned with Content Writer/Designer)
+  // Launch Promo Prices
   const promoPrices = {
     'missed-call': 97,
     'dead-leads': 97,
@@ -50,7 +55,6 @@ const EBookWrapper = () => {
   const originalPriceNum = parseInt(originalPriceStr.replace('R', ''));
   const launchPrice = promoPrices[ebook.slug] || originalPriceNum;
   
-  // Current price after promo and coupon
   const currentPrice = Math.max(0, launchPrice - discount);
 
   const handleApplyCoupon = (code) => {
@@ -71,38 +75,40 @@ const EBookWrapper = () => {
       price: currentPrice,
       coupon: discount > 0 ? couponCode : 'none'
     });
-    
-    console.log(`Payment confirmed for ${ebook.title}. Redirecting to download...`);
-    
-    // Success redirect with state
     navigate('/success', { state: { ebookSlug: ebook.slug, paidPrice: currentPrice } });
   };
 
-  return (
-    <LandingPage 
-      ebook={{
-        ...ebook, 
-        displayPrice: `R${currentPrice}`, 
-        // Show original price if we are in promo or a coupon is applied
-        originalPrice: (currentPrice < originalPriceNum) ? originalPriceStr : null,
-        isPromo: isEBook1 // Banner only for eBook 1 as per task "promo for eBook 1 (first 50)"
-      }} 
-      onCheckout={handlePaymentSuccess} 
-      onApplyCoupon={handleApplyCoupon}
-    />
-  );
+  try {
+    return (
+      <LandingPage 
+        ebook={{
+          ...ebook, 
+          displayPrice: `R${currentPrice}`, 
+          originalPrice: (currentPrice < originalPriceNum) ? originalPriceStr : null,
+          isPromo: isEBook1
+        }} 
+        onCheckout={handlePaymentSuccess} 
+        onApplyCoupon={handleApplyCoupon}
+      />
+    );
+  } catch (error) {
+    console.error("Error rendering LandingPage:", error);
+    return <div className="p-20 text-center"><h1>Something went wrong.</h1><pre>{error.message}</pre></div>;
+  }
 };
 
 const SuccessPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const ebookSlug = location.state?.ebookSlug || 'missed-call';
-  const paidPrice = location.state?.paidPrice;
   const ebook = EBOOKS[ebookSlug];
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   if (!ebook) return <Navigate to="/" replace />;
 
-  // Track GHL affiliate click
   const handleGHLClick = () => {
     trackClick('GHL Affiliate Click', { source: 'Success Page', ebook: ebook.title });
   };
@@ -110,6 +116,10 @@ const SuccessPage = () => {
   const handleDownload = () => {
     trackClick('eBook Download', { ebook: ebook.title });
   };
+
+  const baseUrl = import.meta.env.BASE_URL.endsWith('/') 
+    ? import.meta.env.BASE_URL 
+    : import.meta.env.BASE_URL + '/';
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -123,9 +133,8 @@ const SuccessPage = () => {
         <p className="text-gray-600 mb-8">
           Thank you for purchasing <strong>{ebook.title}</strong>. Your eBook is ready for download below.
         </p>
-
-        <a 
-          href={import.meta.env.BASE_URL + ebook.pdfPath} 
+        <a
+          href={baseUrl + ebook.pdfPath}
           download
           onClick={handleDownload}
           className="block w-full bg-revivex-red text-white font-bold py-4 rounded-xl hover:bg-red-700 transition-colors flex items-center justify-center gap-2 mb-4"
@@ -135,12 +144,11 @@ const SuccessPage = () => {
           </svg>
           Download eBook (PDF)
         </a>
-
         <div className="border-t pt-8 mt-8">
           <p className="text-sm text-gray-500 mb-4">Want to supercharge your business with the tools we mentioned?</p>
-          <a 
-            href="https://www.gohighlevel.com/?fp_ref=06ogd" 
-            target="_blank" 
+          <a
+            href="https://www.gohighlevel.com/?fp_ref=06ogd"
+            target="_blank"
             rel="noopener noreferrer"
             onClick={handleGHLClick}
             className="block w-full bg-orange-500 text-white font-bold py-3 rounded-lg hover:bg-orange-600 transition-colors mb-2"
@@ -149,12 +157,11 @@ const SuccessPage = () => {
           </a>
           <p className="text-xs text-gray-400 italic">Affiliate Link: Helps support our educational content!</p>
         </div>
-
         <div className="mt-8 pt-8 border-t">
           <p className="text-sm text-gray-600 mb-4">Interested in more AI strategies?</p>
           <div className="flex flex-col gap-2">
             {Object.values(EBOOKS).filter(e => e.slug !== ebookSlug).map(otherEbook => (
-              <button 
+              <button
                 key={otherEbook.slug}
                 onClick={() => navigate(`/ebook/${otherEbook.slug}`)}
                 className="text-revivex-black hover:text-revivex-red text-sm font-medium transition-colors"
@@ -164,8 +171,7 @@ const SuccessPage = () => {
             ))}
           </div>
         </div>
-
-        <button 
+        <button
           onClick={() => navigate('/')}
           className="mt-8 text-gray-500 hover:text-revivex-red text-sm font-medium"
         >
