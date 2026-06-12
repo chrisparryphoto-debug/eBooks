@@ -5,64 +5,80 @@ const LandingPage = ({ ebook, onCheckout, onApplyCoupon }) => {
   const [coupon, setCoupon] = useState('');
   const [couponApplied, setCouponApplied] = useState(false);
   const [showCoupon, setShowCoupon] = useState(false);
+  const [paypalLoaded, setPaypalLoaded] = useState(false);
   const paypalRef = useRef();
-
-  console.log("LandingPage rendering with ebook:", ebook?.slug);
 
   useEffect(() => {
     if (!ebook) return;
 
-    const renderPayPal = () => {
-      if (window.paypal && paypalRef.current) {
-        // Clear previous buttons if any
-        paypalRef.current.innerHTML = '';
-        
-        window.paypal.Buttons({
-          createOrder: (data, actions) => {
-            const zarAmount = parseFloat(ebook.displayPrice.replace('R', ''));
-            const usdAmount = (zarAmount / 19).toFixed(2);
-            
-            return actions.order.create({
-              purchase_units: [
-                {
-                  description: ebook.title,
-                  amount: {
-                    currency_code: 'USD',
-                    value: usdAmount,
-                  },
-                  payee: {
-                    email_address: 'chrisparryphoto@gmail.com'
-                  }
-                },
-              ],
-            });
-          },
-          onApprove: async (data, actions) => {
-            const order = await actions.order.capture();
-            console.log('PayPal Order Captured:', order);
-            onCheckout();
-          },
-          onCancel: (data) => {
-            console.log('PayPal Payment Cancelled');
-          },
-          onError: (err) => {
-            console.error('PayPal Error:', err);
-          },
-          style: {
-            layout: 'vertical',
-            color: 'black',
-            shape: 'rect',
-            label: 'buy'
-          }
-        }).render(paypalRef.current);
-      } else {
-        console.log("PayPal SDK not ready yet, retrying in 1s...");
-        setTimeout(renderPayPal, 1000);
+    const loadPayPal = () => {
+      if (window.paypal) {
+        setPaypalLoaded(true);
+        return;
       }
+
+      console.log("Loading PayPal SDK dynamically...");
+      const script = document.createElement('script');
+      script.src = "https://www.paypal.com/sdk/js?client-id=sb&currency=USD";
+      script.async = true;
+      script.onload = () => {
+        console.log("PayPal SDK loaded.");
+        setPaypalLoaded(true);
+      };
+      script.onerror = () => {
+        console.error("Failed to load PayPal SDK.");
+      };
+      document.body.appendChild(script);
     };
 
-    renderPayPal();
-  }, [ebook?.displayPrice]);
+    loadPayPal();
+  }, []);
+
+  useEffect(() => {
+    if (paypalLoaded && window.paypal && paypalRef.current) {
+      // Clear previous buttons
+      paypalRef.current.innerHTML = '';
+      
+      window.paypal.Buttons({
+        createOrder: (data, actions) => {
+          const zarAmount = parseFloat(ebook.displayPrice.replace('R', ''));
+          const usdAmount = (zarAmount / 19).toFixed(2);
+          
+          return actions.order.create({
+            purchase_units: [
+              {
+                description: ebook.title,
+                amount: {
+                  currency_code: 'USD',
+                  value: usdAmount,
+                },
+                payee: {
+                  email_address: 'chrisparryphoto@gmail.com'
+                }
+              },
+            ],
+          });
+        },
+        onApprove: async (data, actions) => {
+          const order = await actions.order.capture();
+          console.log('PayPal Order Captured:', order);
+          onCheckout();
+        },
+        onCancel: (data) => {
+          console.log('PayPal Payment Cancelled');
+        },
+        onError: (err) => {
+          console.error('PayPal Error:', err);
+        },
+        style: {
+          layout: 'vertical',
+          color: 'black',
+          shape: 'rect',
+          label: 'buy'
+        }
+      }).render(paypalRef.current);
+    }
+  }, [paypalLoaded, ebook?.displayPrice]);
 
   if (!ebook) {
     return <div className="p-20 text-center">Loading eBook data...</div>;
@@ -78,9 +94,8 @@ const LandingPage = ({ ebook, onCheckout, onApplyCoupon }) => {
     }
   };
 
-  // Helper to fix base URL paths
   const getAssetPath = (path) => {
-    const base = import.meta.env.BASE_URL;
+    const base = import.meta.env.BASE_URL || "/";
     if (path.startsWith('http')) return path;
     const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base;
     const cleanPath = path.startsWith('/') ? path : '/' + path;
@@ -241,7 +256,11 @@ const LandingPage = ({ ebook, onCheckout, onApplyCoupon }) => {
               )}
 
               <div className="space-y-4">
-                <div ref={paypalRef} className="min-h-[150px]"></div>
+                {!paypalLoaded ? (
+                  <div className="p-4 text-center text-gray-500 italic">Connecting to PayPal...</div>
+                ) : (
+                  <div ref={paypalRef} className="min-h-[150px]"></div>
+                )}
                 <p className="text-center text-xs text-gray-400 mt-4 flex items-center justify-center gap-1">
                   <ShieldCheck size={12} /> Securely processed by PayPal
                 </p>
