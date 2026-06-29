@@ -8,20 +8,17 @@ const LandingPage = ({ ebook, onCheckout, onApplyCoupon }) => {
   const paypalRef = useRef();
 
   useEffect(() => {
-    if (!ebook) return;
-    console.log("LandingPage useEffect: loading PayPal...");
-
-    const script = document.createElement('script');
-    script.src = "https://www.paypal.com/sdk/js?client-id=sb&currency=USD";
-    script.async = true;
-    script.onload = () => {
-      console.log("PayPal SDK loaded.");
+    if (window.paypal) {
       setPaypalLoaded(true);
-    };
-    script.onerror = (e) => {
-      console.error("Failed to load PayPal SDK", e);
-    };
-    document.body.appendChild(script);
+    } else {
+      const interval = setInterval(() => {
+        if (window.paypal) {
+          setPaypalLoaded(true);
+          clearInterval(interval);
+        }
+      }, 500);
+      return () => clearInterval(interval);
+    }
   }, []);
 
   useEffect(() => {
