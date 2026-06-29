@@ -7,6 +7,14 @@ const Navbar = () => {
   const { cartItems } = useCart();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+  const ebookLinks = [
+    { label: "The Cost of the Missed Call", slug: "missed-call" },
+    { label: "Dead Leads Are Gold", slug: "dead-leads" },
+    { label: "Speed Wins", slug: "speed-wins" },
+    { label: "The Website That Converts", slug: "engagement-wins" },
+    { label: "The AI-Ready Service Business (Bundle)", slug: "ai-bundle" }
+  ];
+
   return (
     <nav className="bg-white border-b py-4 px-4 sticky top-0 z-50 shadow-sm">
       <div className="max-w-6xl mx-auto flex justify-between items-center">
@@ -20,16 +28,16 @@ const Navbar = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
               </svg>
             </button>
-            <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-100 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-right">
+            <div className="absolute right-0 mt-2 w-72 bg-white border border-gray-100 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-right">
               <div className="py-2">
-                {Object.values(EBOOKS).map((ebook) => (
+                {ebookLinks.map((link) => (
                   <Link
-                    key={ebook.slug}
-                    to={`/ebook/${ebook.slug}`}
+                    key={link.slug}
+                    to={`/ebook/${link.slug}`}
                     className="block px-4 py-3 text-sm text-gray-700 hover:bg-slate-50 hover:text-red-600 transition"
                   >
-                    <div className="font-bold mb-0.5 truncate">{ebook.title}</div>
-                    <div className="text-xs text-gray-400">{ebook.price}</div>
+                    <div className="font-bold mb-0.5 truncate">{link.label}</div>
+                    <div className="text-xs text-gray-400">{EBOOKS[link.slug]?.price}</div>
                   </Link>
                 ))}
               </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useParams, useLocation, Navigate } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import CartPage from './pages/CartPage';
+import BrowsePage from './pages/BrowsePage';
 import { trackClick } from './utils/analytics';
 import { EBOOKS } from './data/ebooks';
 
@@ -10,7 +11,7 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<EBookWrapper />} />
+        <Route path="/" element={<BrowsePage />} />
         <Route path="/ebook/:slug" element={<EBookWrapper />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/success" element={<SuccessPage />} />
