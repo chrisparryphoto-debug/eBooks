@@ -6,6 +6,7 @@ import Navbar from '../components/Navbar';
 const CartPage = () => {
   const { cartItems, removeFromCart, cartTotal, clearCart } = useCart();
   const [paypalLoaded, setPaypalLoaded] = useState(false);
+  const [showPaypal, setShowPaypal] = useState(false);
   const paypalRef = useRef();
   const navigate = useNavigate();
 
@@ -24,7 +25,7 @@ const CartPage = () => {
   }, []);
 
   useEffect(() => {
-    if (paypalLoaded && window.paypal && paypalRef.current && cartItems.length > 0) {
+    if (paypalLoaded && window.paypal && paypalRef.current && cartItems.length > 0 && showPaypal) {
       try {
         paypalRef.current.innerHTML = '';
         window.paypal.Buttons({
@@ -118,14 +119,28 @@ const CartPage = () => {
                 <p className="text-[10px] text-slate-400 italic">Approx. ${(cartTotal / 19).toFixed(2)} USD for processing</p>
               </div>
               
-              <div className="min-h-[150px] flex flex-col justify-center">
-                {!paypalLoaded ? (
-                  <div className="flex flex-col items-center gap-4 py-8">
-                    <div className="animate-spin rounded-full h-8 w-12 border-b-2 border-red-600"></div>
-                    <p className="text-slate-400 text-xs">Loading payment options...</p>
-                  </div>
+              <div className="space-y-4">
+                {!showPaypal ? (
+                  <button 
+                    onClick={() => setShowPaypal(true)}
+                    className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-slate-800 transition flex items-center justify-center gap-2"
+                  >
+                    Proceed to PayPal
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </button>
                 ) : (
-                  <div ref={paypalRef} className="w-full"></div>
+                  <div className="min-h-[150px] flex flex-col justify-center">
+                    {!paypalLoaded ? (
+                      <div className="flex flex-col items-center gap-4 py-8">
+                        <div className="animate-spin rounded-full h-8 w-12 border-b-2 border-red-600"></div>
+                        <p className="text-slate-400 text-xs">Loading payment options...</p>
+                      </div>
+                    ) : (
+                      <div ref={paypalRef} className="w-full"></div>
+                    )}
+                  </div>
                 )}
               </div>
               

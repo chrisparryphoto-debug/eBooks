@@ -107,7 +107,7 @@ const EBookWrapper = () => {
 const SuccessPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const purchasedSlugs = location.state?.purchasedSlugs || [location.state?.ebookSlug || 'missed-call'];
+  const purchasedSlugs = location.state?.purchasedSlugs || (location.state?.ebookSlug ? [location.state.ebookSlug] : []);
   const purchasedEbooks = purchasedSlugs.map(slug => EBOOKS[slug]).filter(Boolean);
 
   useEffect(() => {
