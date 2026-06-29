@@ -1,11 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useCart } from '../context/CartContext';
+import Navbar from '../components/Navbar';
 
 const LandingPage = ({ ebook, onCheckout, onApplyCoupon }) => {
+  const { addToCart, cartItems } = useCart();
   const [coupon, setCoupon] = useState('');
   const [couponApplied, setCouponApplied] = useState(false);
   const [showCoupon, setShowCoupon] = useState(false);
   const [paypalLoaded, setPaypalLoaded] = useState(false);
+  const [addedToCart, setAddedToCart] = useState(false);
   const paypalRef = useRef();
+
+  const isInCart = cartItems.some(item => item.slug === ebook?.slug);
 
   useEffect(() => {
     if (window.paypal) {
@@ -74,16 +80,7 @@ const LandingPage = ({ ebook, onCheckout, onApplyCoupon }) => {
 
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900">
-      {/* Navigation */}
-      <nav className="bg-white border-b py-4 px-4 sticky top-0 z-50 shadow-sm">
-        <div className="max-w-6xl mx-auto flex justify-between items-center">
-          <div className="font-bold text-xl text-red-600">ReviveX Digital</div>
-          <div className="hidden md:flex gap-6 text-sm font-medium text-gray-600">
-            <a href="#learn" className="hover:text-red-600 transition">What's Inside</a>
-            <a href="#checkout" className="hover:text-red-600 transition">Get It Now</a>
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
       {/* Hero Section */}
       <header className="bg-slate-900 text-white py-16 px-4">
@@ -98,15 +95,32 @@ const LandingPage = ({ ebook, onCheckout, onApplyCoupon }) => {
             <p className="text-xl mb-8 text-slate-300">
               {ebook.tagline}
             </p>
-            <a 
-              href="#checkout" 
-              className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-xl font-bold text-lg inline-flex items-center gap-2 transition-all transform hover:scale-105 shadow-xl"
-            >
-              Get Your Copy Now
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-              </svg>
-            </a>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+              <button 
+                onClick={() => {
+                  addToCart(ebook);
+                  setAddedToCart(true);
+                  setTimeout(() => setAddedToCart(false), 2000);
+                }}
+                className={`${addedToCart ? 'bg-green-600' : 'bg-red-600 hover:bg-red-700'} text-white px-8 py-4 rounded-xl font-bold text-lg inline-flex items-center justify-center gap-2 transition-all transform hover:scale-105 shadow-xl`}
+              >
+                {addedToCart ? 'Added to Cart!' : 'Add to Cart'}
+                {!addedToCart && (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                )}
+              </button>
+              <a 
+                href="#checkout" 
+                className="bg-white/10 hover:bg-white/20 text-white px-8 py-4 rounded-xl font-bold text-lg inline-flex items-center justify-center gap-2 transition-all"
+              >
+                Buy Now
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </a>
+            </div>
           </div>
           <div className="w-64 md:w-80 shadow-2xl rounded-lg overflow-hidden border-4 border-slate-700">
             <img 

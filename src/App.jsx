@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useParams, useLocation, Navigate } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
+import CartPage from './pages/CartPage';
 import { trackClick } from './utils/analytics';
 import { EBOOKS } from './data/ebooks';
 
@@ -11,6 +12,7 @@ function App() {
       <Routes>
         <Route path="/" element={<EBookWrapper />} />
         <Route path="/ebook/:slug" element={<EBookWrapper />} />
+        <Route path="/cart" element={<CartPage />} />
         <Route path="/success" element={<SuccessPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
@@ -104,22 +106,22 @@ const EBookWrapper = () => {
 const SuccessPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const ebookSlug = location.state?.ebookSlug || 'missed-call';
-  const ebook = EBOOKS[ebookSlug];
+  const purchasedSlugs = location.state?.purchasedSlugs || [location.state?.ebookSlug || 'missed-call'];
+  const purchasedEbooks = purchasedSlugs.map(slug => EBOOKS[slug]).filter(Boolean);
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  if (!ebook) return <Navigate to="/" replace />;
+  if (purchasedEbooks.length === 0) return <Navigate to="/" replace />;
 
-  const handleDownload = () => {
-    trackClick('eBook Download', { ebook: ebook.title });
+  const handleDownload = (title) => {
+    trackClick('eBook Download', { ebook: title });
   };
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center border-t-8 border-green-500">
+      <div className="max-w-2xl w-full bg-white rounded-2xl shadow-xl p-8 text-center border-t-8 border-green-500">
         <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
           <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
@@ -127,16 +129,33 @@ const SuccessPage = () => {
         </div>
         <h1 className="text-3xl font-bold mb-2">Payment Successful!</h1>
         <p className="text-gray-600 mb-8">
-          Thank you for purchasing <strong>{ebook.title}</strong>. Your eBook is ready for download below.
+          Thank you for your purchase. Your eBook{purchasedEbooks.length > 1 ? 's are' : ' is'} ready for download below.
         </p>
-        <a
-          href={'/' + ebook.pdfPath}
-          download
-          onClick={handleDownload}
-          className="block w-full bg-red-600 text-white font-bold py-4 rounded-xl hover:bg-red-700 transition-colors flex items-center justify-center gap-2 mb-4"
-        >
-          Download eBook (PDF)
-        </a>
+        
+        <div className="space-y-4 mb-8">
+          {purchasedEbooks.map((ebook) => (
+            <div key={ebook.slug} className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row items-center gap-4 text-left">
+              <div className="w-16 h-20 bg-slate-200 rounded overflow-hidden shrink-0">
+                <img src={ebook.coverImage} alt={ebook.title} className="w-full h-full object-cover" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-sm mb-2">{ebook.title}</h3>
+                <a
+                  href={'/' + ebook.pdfPath}
+                  download
+                  onClick={() => handleDownload(ebook.title)}
+                  className="inline-flex items-center gap-2 bg-red-600 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-red-700 transition"
+                >
+                  Download PDF
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                </a>
+              </div>
+            </div>
+          ))}
+        </div>
+
         <div className="border-t pt-8 mt-8">
           <p className="text-sm text-gray-500 mb-4">Want to supercharge your business with the tools we mentioned?</p>
           <a
